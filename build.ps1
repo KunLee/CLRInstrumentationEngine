@@ -24,6 +24,9 @@
 .PARAMETER Release
     Optional, by default the build will run with Debug configuration. This flag switches to using Release configuration.
 
+.PARAMETER PublicRelease
+    Optional, this removes the -build preview version on the output
+
 .PARAMETER VerboseMsbuild
     Optional, enables more verbose output for msbuild (great for investigating build failures). We recommend piping the output to a temp.log file:
         .\build.ps1 -Verbose > temp.log
@@ -54,6 +57,10 @@ param(
     [Parameter(Mandatory=$false)]
     [switch]
     $Release,
+
+    [Parameter(Mandatory=$false)]
+    [switch]
+    $PublicRelease,
 
     [Parameter(Mandatory=$false)]
     [switch]
@@ -222,7 +229,7 @@ if (!$SkipBuild)
     }
 
     # Build InstrumentationEngine.sln
-    $buildArgsInit = "$repoPath\InstrumentationEngine.sln /p:configuration=`"$configuration`" /p:SignType=$SignType /p:BuildVersion=$BuildVersion /clp:$($clParams)"
+    $buildArgsInit = "$repoPath\InstrumentationEngine.sln /p:configuration=`"$configuration`" /p:SignType=$SignType /p:BuildVersion=$BuildVersion /p:PublicRelease=$PublicRelease /clp:$($clParams)"
     $buildArgs = @(
         "$buildArgsInit /p:platform=`"x86`""
         "$buildArgsInit /p:platform=`"x64`""
@@ -256,7 +263,7 @@ if (!$SkipPackaging)
     Invoke-ExpressionHelper -Executable "dotnet" -Arguments $restoreArgs -Activity 'dotnet Restore Solutions'
 
     # Build InstrumentationEngine.Packages.sln
-    $buildArgsInit = "$repoPath\src\InstrumentationEngine.Packages.sln /p:configuration=`"$configuration`" /p:SignType=$SignType /p:BuildVersion=$BuildVersion /clp:$($clParams) /m"
+    $buildArgsInit = "$repoPath\src\InstrumentationEngine.Packages.sln /p:configuration=`"$configuration`" /p:SignType=$SignType /p:BuildVersion=$BuildVersion /p:PublicRelease=$PublicRelease /clp:$($clParams) /m"
     $buildArgs = @(
         "$buildArgsInit /p:platform=`"x86`""
         "$buildArgsInit /p:platform=`"x64`""
