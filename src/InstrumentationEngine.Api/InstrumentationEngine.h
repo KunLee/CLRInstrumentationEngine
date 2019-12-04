@@ -311,6 +311,13 @@ typedef interface IProfilerManager5 IProfilerManager5;
 #endif 	/* __IProfilerManager5_FWD_DEFINED__ */
 
 
+#ifndef __IInstrumentationMethodAttach_FWD_DEFINED__
+#define __IInstrumentationMethodAttach_FWD_DEFINED__
+typedef interface IInstrumentationMethodAttach IInstrumentationMethodAttach;
+
+#endif 	/* __IInstrumentationMethodAttach_FWD_DEFINED__ */
+
+
 #ifndef __IInstrumentationMethodExceptionEvents_FWD_DEFINED__
 #define __IInstrumentationMethodExceptionEvents_FWD_DEFINED__
 typedef interface IInstrumentationMethodExceptionEvents IInstrumentationMethodExceptionEvents;
@@ -7008,6 +7015,94 @@ EXTERN_C const IID IID_IProfilerManager5;
 
 
 #endif 	/* __IProfilerManager5_INTERFACE_DEFINED__ */
+
+
+#ifndef __IInstrumentationMethodAttach_INTERFACE_DEFINED__
+#define __IInstrumentationMethodAttach_INTERFACE_DEFINED__
+
+/* interface IInstrumentationMethodAttach */
+/* [unique][uuid][object] */ 
+
+
+EXTERN_C const IID IID_IInstrumentationMethodAttach;
+
+#if defined(__cplusplus) && !defined(CINTERFACE)
+    
+    MIDL_INTERFACE("3BD6C171-4F3C-45C3-8CB9-BC8C337D1683")
+    IInstrumentationMethodAttach : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALLTYPE IntializeForAttach( 
+            /* [in] */ __RPC__in_opt IProfilerManager *pProfilerManager) = 0;
+        
+        virtual HRESULT STDMETHODCALLTYPE AttachComplete( void) = 0;
+        
+    };
+    
+    
+#else 	/* C style interface */
+
+    typedef struct IInstrumentationMethodAttachVtbl
+    {
+        BEGIN_INTERFACE
+        
+        HRESULT ( STDMETHODCALLTYPE *QueryInterface )( 
+            __RPC__in IInstrumentationMethodAttach * This,
+            /* [in] */ __RPC__in REFIID riid,
+            /* [annotation][iid_is][out] */ 
+            _COM_Outptr_  void **ppvObject);
+        
+        ULONG ( STDMETHODCALLTYPE *AddRef )( 
+            __RPC__in IInstrumentationMethodAttach * This);
+        
+        ULONG ( STDMETHODCALLTYPE *Release )( 
+            __RPC__in IInstrumentationMethodAttach * This);
+        
+        HRESULT ( STDMETHODCALLTYPE *IntializeForAttach )( 
+            __RPC__in IInstrumentationMethodAttach * This,
+            /* [in] */ __RPC__in_opt IProfilerManager *pProfilerManager);
+        
+        HRESULT ( STDMETHODCALLTYPE *AttachComplete )( 
+            __RPC__in IInstrumentationMethodAttach * This);
+        
+        END_INTERFACE
+    } IInstrumentationMethodAttachVtbl;
+
+    interface IInstrumentationMethodAttach
+    {
+        CONST_VTBL struct IInstrumentationMethodAttachVtbl *lpVtbl;
+    };
+
+    
+
+#ifdef COBJMACROS
+
+
+#define IInstrumentationMethodAttach_QueryInterface(This,riid,ppvObject)	\
+    ( (This)->lpVtbl -> QueryInterface(This,riid,ppvObject) ) 
+
+#define IInstrumentationMethodAttach_AddRef(This)	\
+    ( (This)->lpVtbl -> AddRef(This) ) 
+
+#define IInstrumentationMethodAttach_Release(This)	\
+    ( (This)->lpVtbl -> Release(This) ) 
+
+
+#define IInstrumentationMethodAttach_IntializeForAttach(This,pProfilerManager)	\
+    ( (This)->lpVtbl -> IntializeForAttach(This,pProfilerManager) ) 
+
+#define IInstrumentationMethodAttach_AttachComplete(This)	\
+    ( (This)->lpVtbl -> AttachComplete(This) ) 
+
+#endif /* COBJMACROS */
+
+
+#endif 	/* C style interface */
+
+
+
+
+#endif 	/* __IInstrumentationMethodAttach_INTERFACE_DEFINED__ */
 
 
 #ifndef __IInstrumentationMethodExceptionEvents_INTERFACE_DEFINED__

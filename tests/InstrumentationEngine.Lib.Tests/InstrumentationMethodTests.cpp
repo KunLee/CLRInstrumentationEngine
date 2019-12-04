@@ -17,13 +17,13 @@ namespace InstrumentationEngineLibTests
         TEST_METHOD(InitializeWithAllNullsReturnsInvalidArg)
         {
             MicrosoftInstrumentationEngine::CInstrumentationMethod method(nullptr, nullptr, nullptr, nullptr, GUID(), 0);
-            Assert::AreEqual(E_INVALIDARG, method.Initialize(nullptr, false));
+            Assert::AreEqual(E_INVALIDARG, method.Initialize(nullptr, false, false));
         }
 
         TEST_METHOD(InitializeWithBadPathReturnsNotFound)
         {
             MicrosoftInstrumentationEngine::CInstrumentationMethod method(L"c:\\temp", L"instrumentation method", L"test method description", L"instrumentationMethod.dll", GUID(), 0);
-            Assert::AreEqual(HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND), method.Initialize(nullptr, false));
+            Assert::AreEqual(HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND), method.Initialize(nullptr, false, false));
         }
 
         TEST_METHOD(InitializeWithNotSignedDllAndValidationOnReturnsFail)
@@ -38,7 +38,7 @@ namespace InstrumentationEngineLibTests
 
 
             MicrosoftInstrumentationEngine::CInstrumentationMethod method(BSTR(modulePath.c_str()), L"instrumentation method", L"test method description", BSTR(fileName.c_str()), GUID(), 0);
-            Assert::AreEqual(E_FAIL, method.Initialize(nullptr, true));
+            Assert::AreEqual(E_FAIL, method.Initialize(nullptr, true, false));
         }
 
         TEST_METHOD(InitializeWithNotSignedDllAndValidationOffReturnsFail)
@@ -53,7 +53,7 @@ namespace InstrumentationEngineLibTests
 
 
             MicrosoftInstrumentationEngine::CInstrumentationMethod method(BSTR(modulePath.c_str()), L"instrumentation method", L"test method description", BSTR(fileName.c_str()), GUID(), 0);
-            Assert::AreEqual(HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND), method.Initialize(nullptr, false));
+            Assert::AreEqual(HRESULT_FROM_WIN32(ERROR_PROC_NOT_FOUND), method.Initialize(nullptr, false, false));
         }
 
     };

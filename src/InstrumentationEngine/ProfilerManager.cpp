@@ -28,7 +28,8 @@ CProfilerManager::CProfilerManager() :
     m_bIsInInitialize(false),
     m_bIsInitializingInstrumentationMethod(false),
     m_dwInstrumentationMethodFlags(0),
-    m_bValidateCodeSignature(true)
+    m_bValidateCodeSignature(true),
+    m_bAttach(false)
 {
 #ifdef PLATFORM_UNIX
     PAL_Initialize(0, NULL);
@@ -522,7 +523,7 @@ HRESULT CProfilerManager::AddInstrumentationMethod(
             }
 
             // Do not detach so CComPtr can track refcount.
-            hr = pInstrumentationMethod->Initialize(pProfilerManagerWrapper, m_bValidateCodeSignature);
+            hr = pInstrumentationMethod->Initialize(pProfilerManagerWrapper, m_bValidateCodeSignature, m_bAttach);
 
             dwFlags = GetInitializingInstrumentationMethodFlags();
         }
@@ -668,33 +669,7 @@ HRESULT CProfilerManager::Initialize(
 
     PROF_CALLBACK_BEGIN
 
-    // Mark that this is during the initialize call. This enables operations that can only be supported during initialize
-    CInitializeHolder initHolder(this);
-
-    IfFailRet(pICorProfilerInfoUnk->QueryInterface(__uuidof(ICorProfilerInfo), (LPVOID*)&m_pRealProfilerInfo));
-
-    IfFailRet(DetermineClrVersion());
-
-    //set event mask to be default one. Later host and Instrumentation methods may call it again
-    IfFailRet(this->SetEventMask(m_dwEventMask));
-
-    m_profilerManagerHost.Attach(new CExtensionsHost);
-    IfFailRet(m_profilerManagerHost == nullptr ? E_OUTOFMEMORY : S_OK);
-
-    m_pWrappedProfilerInfo = (ICorProfilerInfo*)(new CCorProfilerInfoWrapper(this, m_pRealProfilerInfo));
-
-    // Initialize the profiler manager host. This gives the host the chance to initialize, configure instrumentation methods, and register for raw events if desired.
-    hr = m_profilerManagerHost->Initialize(this);
-    if (FAILED(hr))
-    {
-        CLogging::LogError(_T("CInstrumentationMethod::Initialize - failed to initialize profiler manager host"));
-        return hr;
-    }
-
-    if (m_bProfilingDisabled)
-    {
-        return CORPROF_E_PROFILER_CANCEL_ACTIVATION;
-    }
+    IfFailRet(InitializeCore(pICorProfilerInfoUnk));
 
     // Take the lock that products the raw profiler callback and the instrumentation methods. This keeps the collection from changing out from under the iterator
 
@@ -819,6 +794,42 @@ DWORD CProfilerManager::CalculateEventMask(DWORD dwAdditionalFlags)
     return result;
 }
 
+HRESULT CProfilerManager::InitializeCore(_In_ IUnknown* pCorProfilerInfoUnk)
+{
+    IfNullRetPointer(pCorProfilerInfoUnk);
+
+    HRESULT hr = S_OK;
+
+    // Mark that this is during the initialize call. This enables operations that can only be supported during initialize
+    CInitializeHolder initHolder(this);
+
+    IfFailRet(pCorProfilerInfoUnk->QueryInterface(__uuidof(ICorProfilerInfo), (LPVOID*)&m_pRealProfilerInfo));
+
+    IfFailRet(DetermineClrVersion());
+
+    //set event mask to be default one. Later host and Instrumentation methods may call it again
+    IfFailRet(this->SetEventMask(m_dwEventMask));
+
+    m_profilerManagerHost.Attach(new CExtensionsHost);
+    IfFailRet(m_profilerManagerHost == nullptr ? E_OUTOFMEMORY : S_OK);
+
+    m_pWrappedProfilerInfo = (ICorProfilerInfo*)(new CCorProfilerInfoWrapper(this, m_pRealProfilerInfo));
+
+    // Initialize the profiler manager host. This gives the host the chance to initialize, configure instrumentation methods, and register for raw events if desired.
+    hr = m_profilerManagerHost->Initialize(this);
+    if (FAILED(hr))
+    {
+        CLogging::LogError(_T("CProfilerManager::Initialize - failed to initialize profiler manager host"));
+        return hr;
+    }
+
+    if (m_bProfilingDisabled)
+    {
+        return CORPROF_E_PROFILER_CANCEL_ACTIVATION;
+    }
+
+    return S_OK;
+}
 
 HRESULT CProfilerManager::SetEventMask(DWORD dwEventMask)
 {
@@ -2651,9 +2662,11 @@ HRESULT CProfilerManager::InitializeForAttach(
 {
     HRESULT hr = S_OK;
 
-    // TODO: How to handle this? Does this need to support profiler attach? How does that impact initlization etc...
-
     PROF_CALLBACK_BEGIN
+
+    m_bAttach = true;
+
+    IfFailRet(InitializeCore(pCorProfilerInfoUnk));
 
     IfFailRet(SendEventToRawProfilerCallback(&ICorProfilerCallback3::InitializeForAttach, pCorProfilerInfoUnk, pvClientData, cbClientData));
 
@@ -2666,9 +2679,16 @@ HRESULT CProfilerManager::ProfilerAttachComplete(void)
 {
     HRESULT hr = S_OK;
 
-    // TODO: How to handle this? Does this need to support profiler attach? How does that impact initlization etc...
-
     PROF_CALLBACK_BEGIN
+
+    {
+        CCriticalSectionHolder lock(&m_cs);
+
+        for (TInstrumentationMethodsCollection::reference pair : m_instrumentationMethods)
+        {
+            IfFailRet(pair.first->AttachComplete());
+        }
+    }
 
     IfFailRet(SendEventToRawProfilerCallback(&ICorProfilerCallback3::ProfilerAttachComplete));
 

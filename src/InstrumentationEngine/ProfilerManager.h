@@ -169,6 +169,9 @@ namespace MicrosoftInstrumentationEngine
 
         CComPtr<CAppDomainCollection> m_pAppDomainCollection;
 
+        // Indicates that this profiler instance was initialized via attach (instead of initialized at CLR startup).
+        bool m_bAttach;
+
     public:
         CProfilerManager();
         ~CProfilerManager();
@@ -235,6 +238,8 @@ namespace MicrosoftInstrumentationEngine
         // Private Helpers
     private:
         DWORD CalculateEventMask(DWORD dwAdditionalFlags);
+
+        HRESULT InitializeCore(_In_ IUnknown* pCorProfilerInfoUnk);
 
         // The CLR doesn't initialize com before calling the profiler, and the profiler manager cannot do so itself
         // as that would screw up the com state for the application thread. This thread allows the profiler manager

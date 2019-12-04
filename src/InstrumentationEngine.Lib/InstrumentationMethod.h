@@ -35,7 +35,9 @@ namespace MicrosoftInstrumentationEngine
             _In_ DWORD dwPriority
             );
 
-        HRESULT Initialize(_In_ IProfilerManager* pProfilerManager, bool validateCodeSignature);
+        HRESULT Initialize(_In_ IProfilerManager* pProfilerManager, bool validateCodeSignature, bool bAttach);
+
+        HRESULT AttachComplete();
 
         HRESULT GetRawInstrumentationMethod(_Out_ IInstrumentationMethod** ppInstrumentationMethod);
 

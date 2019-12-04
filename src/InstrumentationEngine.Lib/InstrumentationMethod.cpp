@@ -22,7 +22,7 @@ MicrosoftInstrumentationEngine::CInstrumentationMethod::CInstrumentationMethod(
 }
 
 
-HRESULT MicrosoftInstrumentationEngine::CInstrumentationMethod::Initialize(_In_ IProfilerManager* pProfilerManager, bool validateCodeSignature)
+HRESULT MicrosoftInstrumentationEngine::CInstrumentationMethod::Initialize(_In_ IProfilerManager* pProfilerManager, bool validateCodeSignature, bool bAttach)
 {
     HRESULT hr = S_OK;
 
@@ -90,10 +90,48 @@ HRESULT MicrosoftInstrumentationEngine::CInstrumentationMethod::Initialize(_In_ 
         return hr;
     }
 
-    hr = m_pInstrumentationMethod->Initialize(pProfilerManager);
+    if (bAttach)
+    {
+        CComQIPtr<IInstrumentationMethodAttach> pInstrumentationMethodAttach = m_pInstrumentationMethod.p;
+        if (nullptr == pInstrumentationMethodAttach)
+        {
+            hr = E_NOINTERFACE;
+            CLogging::LogError(_T("CInstrumentationMethod::Initialize - instrumentation method does not implement attach interface PID: %u hr: %x name: %s"), GetCurrentProcessId(), hr, m_bstrName.m_str);
+            return hr;
+        }
+
+        hr = pInstrumentationMethodAttach->IntializeForAttach(pProfilerManager);
+    }
+    else
+    {
+        hr = m_pInstrumentationMethod->Initialize(pProfilerManager);
+    }
+
     if (FAILED(hr))
     {
         CLogging::LogError(_T("CInstrumentationMethod::Initialize - failed to initialize instrumentation method PID: %u hr: %x name: %s"), GetCurrentProcessId(), hr, m_bstrName.m_str);
+        return hr;
+    }
+
+    return S_OK;
+}
+
+HRESULT MicrosoftInstrumentationEngine::CInstrumentationMethod::AttachComplete()
+{
+    HRESULT hr = S_OK;
+
+    CComQIPtr<IInstrumentationMethodAttach> pInstrumentationMethodAttach = m_pInstrumentationMethod.p;
+    if (nullptr == pInstrumentationMethodAttach)
+    {
+        hr = E_NOINTERFACE;
+        CLogging::LogError(_T("CInstrumentationMethod::AttachComplete - instrumentation method does not implement attach interface PID: %u hr: %x name: %s"), GetCurrentProcessId(), hr, m_bstrName.m_str);
+        return hr;
+    }
+
+    hr = pInstrumentationMethodAttach->AttachComplete();
+    if (FAILED(hr))
+    {
+        CLogging::LogError(_T("CInstrumentationMethod::AttachComplete - instrumentation method failed to complete attach PID: %u hr: %x name: %s"), GetCurrentProcessId(), hr, m_bstrName.m_str);
         return hr;
     }
 
