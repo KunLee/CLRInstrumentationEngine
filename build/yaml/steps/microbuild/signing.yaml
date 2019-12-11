@@ -8,7 +8,7 @@ parameters:
 
 steps:
 # nuget install MicroBuild.Plugins.Signing
-- ${{ if in(parameters.SignType, 'Real', 'Test') }}:
+- ${{ if notIn(parameters.SignType, '', 'None') }}:
   - task: MicroBuildSigningPlugin@2
     displayName: Install Signing Plugin
     inputs:

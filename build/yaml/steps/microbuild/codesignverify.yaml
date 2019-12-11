@@ -5,7 +5,7 @@ parameters:
 
 steps:
 
-- ${{ if in(parameters.SignType, 'Real', 'Test') }}:
+- ${{ if notIn(parameters.SignType, '', 'None') }}:
   - powershell: |
       Write-Host "##vso[task.setvariable variable=SignType;]${{ parameters.SignType }}"
     displayName: Set Signing From Parameters
